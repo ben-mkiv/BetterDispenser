@@ -33,6 +33,7 @@ public class DispenserCapability implements IDispenserCapability {
     static {
         interactionItems.add(Items.BLAZE_ROD);
         interactionItems.add(Items.NETHER_STAR);
+        interactionItems.add(Items.PAPER);
     }
 
 
@@ -112,8 +113,8 @@ public class DispenserCapability implements IDispenserCapability {
         for(AnimalEntity entity : entityList){
             if(entityFilter.size() > 0 && !entityFilter.contains(entity.getClass()))
                 continue;
-
-            if(entity.isChild() || !entity.canBreed() || entity.getGrowingAge() != 0)
+            // note: entity.func_234178_eO_() != 0 was entity.canBreed() before, but this is broken outside of dev environment for some reason
+            if(entity.isChild() || entity.func_234178_eO_() != 0 || entity.getGrowingAge() != 0)
                 continue;
 
             if(getEntitiesWithinRange(entity.getClass()).size() > mobCap)
@@ -127,6 +128,20 @@ public class DispenserCapability implements IDispenserCapability {
 
             if(breeding.get(entity.getClass()).increase(entity))
                 return;
+        }
+    }
+
+    private void printDebug(PlayerEntity playerEntity){
+        playerEntity.sendStatusMessage(new StringTextComponent("§5total mob cap: " + totalMobCap), false);
+
+        playerEntity.sendStatusMessage(new StringTextComponent("§cwithin range:"), false);
+        for(AnimalEntity entity : getAnimalsWithinRange()){
+            playerEntity.sendStatusMessage(new StringTextComponent("§c# §4" + entity.getName().getString() + ", can breed: " + entity.canBreed() + ", inLove: " + entity.func_234178_eO_() + ", age: " + entity.getGrowingAge() + ", type: " + entity.getType().getName().getString()), false);
+        }
+
+        playerEntity.sendStatusMessage(new StringTextComponent("§a"+breeding.size() + " couples"), false);
+        for(EntityCouple couple : breeding.values()){
+            playerEntity.sendStatusMessage(new StringTextComponent("§a# §2class: " + couple.getEntityClass().getName() + ", can work: " + couple.canWork()), false);
         }
     }
 
@@ -161,6 +176,10 @@ public class DispenserCapability implements IDispenserCapability {
             else
                 setupFilter(event.getPlayer());
 
+            event.setCanceled(true);
+        }
+        else if(event.getItemStack().getItem().equals(Items.PAPER)){
+            printDebug(event.getPlayer());
             event.setCanceled(true);
         }
     }
@@ -320,6 +339,14 @@ public class DispenserCapability implements IDispenserCapability {
                 nextFeeding = System.currentTimeMillis() + 5000;
                 return false;
             }
+        }
+
+        public Class getEntityClass(){
+            for(AnimalEntity entity : parents){
+                return entity.getClass();
+            }
+
+            return AnimalEntity.class;
         }
 
         public boolean canWork(){
