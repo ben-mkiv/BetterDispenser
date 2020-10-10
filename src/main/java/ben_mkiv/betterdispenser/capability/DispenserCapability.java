@@ -113,8 +113,8 @@ public class DispenserCapability implements IDispenserCapability {
         for(AnimalEntity entity : entityList){
             if(entityFilter.size() > 0 && !entityFilter.contains(entity.getClass()))
                 continue;
-            // note: entity.func_234178_eO_() != 0 was entity.canBreed() before, but this is broken outside of dev environment for some reason
-            if(entity.isChild() || entity.func_234178_eO_() != 0 || entity.getGrowingAge() != 0)
+
+            if(entity.isChild() || !canBreed(entity) || entity.getGrowingAge() != 0)
                 continue;
 
             if(getEntitiesWithinRange(entity.getClass()).size() > mobCap)
@@ -136,7 +136,7 @@ public class DispenserCapability implements IDispenserCapability {
 
         playerEntity.sendStatusMessage(new StringTextComponent("§cwithin range:"), false);
         for(AnimalEntity entity : getAnimalsWithinRange()){
-            playerEntity.sendStatusMessage(new StringTextComponent("§c# §4" + entity.getName().getString() + ", can breed: " + entity.canBreed() + ", inLove: " + entity.func_234178_eO_() + ", age: " + entity.getGrowingAge() + ", type: " + entity.getType().getName().getString()), false);
+            playerEntity.sendStatusMessage(new StringTextComponent("§c# §4" + entity.getName().getString() + ", can breed: " + canBreed(entity) + ", inLove: " + entity.func_234178_eO_() + ", age: " + entity.getGrowingAge() + ", type: " + entity.getType().getName().getString()), false);
         }
 
         playerEntity.sendStatusMessage(new StringTextComponent("§a"+breeding.size() + " couples"), false);
@@ -258,6 +258,11 @@ public class DispenserCapability implements IDispenserCapability {
             MinecraftForge.EVENT_BUS.unregister(this);
         }
 
+    }
+
+    private boolean canBreed(AnimalEntity entity){
+        // note: entity.func_234178_eO_() != 0 was entity.canBreed() before, but this is broken outside of dev environment for some reason
+        return entity.func_234178_eO_() <= 0;
     }
 
 
